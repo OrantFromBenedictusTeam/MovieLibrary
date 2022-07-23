@@ -5,6 +5,7 @@ using MovieLibrary.Api.Controllers.Filter.Dto;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System;
 
 namespace MovieLibrary.Api.Controllers.Filter
 {
@@ -29,7 +30,13 @@ namespace MovieLibrary.Api.Controllers.Filter
                 .OrderByDescending(movie => movie.ImdbRating)
                 .Select(movie => _mapper.Map<MovieWithCategoriesDto>(movie));
 
-            if(string.IsNullOrWhiteSpace(requestDto.SearchText) == false)
+            if ((requestDto.PageNumber == null && requestDto.ItemsPerPage != null) ||
+                (requestDto.PageNumber != null && requestDto.ItemsPerPage == null))
+            {
+                throw new ArgumentException($"Parameters {nameof(requestDto.PageNumber)} and {nameof(requestDto.ItemsPerPage)} both must have values or both must not have values in the same request.");
+            }
+
+            if (string.IsNullOrWhiteSpace(requestDto.SearchText) == false)
             {
                 result = result.Where(movie => movie.Title.ToUpper().Contains(requestDto.SearchText.ToUpper()));
             }
@@ -47,6 +54,11 @@ namespace MovieLibrary.Api.Controllers.Filter
             if(requestDto.CategoriesIds.Any())
             {
                 result = result.Where(movie => movie.Categories.Any(category => requestDto.CategoriesIds.Contains(category.Id)));
+            }
+
+            if(requestDto.PageNumber.HasValue)
+            {
+                result = result.Skip((requestDto.PageNumber.Value - 1) * requestDto.ItemsPerPage.Value).Take(requestDto.ItemsPerPage.Value);
             }
 
             return result;

@@ -22,7 +22,7 @@ namespace MovieLibrary.Api
             CreateMap<CreateMovieDto, Movie>();
 
             CreateMap<Movie, MovieWithCategoriesDto>().ForMember(
-                                dto => dto.Categories,
+                dto => dto.Categories,
                 opt => opt.MapFrom(entity => entity.MovieCategories.Select(movieCategory => movieCategory.Category).ToList()));
         }
     }

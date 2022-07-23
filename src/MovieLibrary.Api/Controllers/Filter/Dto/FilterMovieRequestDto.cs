@@ -1,6 +1,6 @@
 ﻿namespace MovieLibrary.Api.Controllers.Filter.Dto
 {
-    public class FilterMovieRequestDto
+    public class FilterMovieRequestDto: PagingRequestDto
     {
         public string SearchText { get; set; }
         public decimal? MinImdb { get; set; }
