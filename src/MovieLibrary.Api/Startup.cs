@@ -1,10 +1,13 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using MovieLibrary.Api.Common;
 using MovieLibrary.Data;
+using MovieLibrary.Data.Repositories;
 
 namespace MovieLibrary.Api
 {
@@ -20,6 +23,12 @@ namespace MovieLibrary.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddEntityFrameworkSqlite().AddDbContext<MovieLibraryContext>();
+
+            var autoMapper = new MapperConfiguration(item => item.AddProfile(new AutoMapperProfile()));
+            IMapper mapper = autoMapper.CreateMapper();
+            services.AddSingleton(mapper);
+
+            services.AddScoped(typeof(IRepository<>), typeof(EFRepository<>));
 
             services.AddControllers();
             services.AddSwaggerGen(options =>
