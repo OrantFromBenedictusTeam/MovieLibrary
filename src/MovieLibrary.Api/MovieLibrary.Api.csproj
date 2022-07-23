@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MovieLibrary.Core\MovieLibrary.Core.csproj" />
+    <ProjectReference Include="..\MovieLibrary.Data\MovieLibrary.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>
