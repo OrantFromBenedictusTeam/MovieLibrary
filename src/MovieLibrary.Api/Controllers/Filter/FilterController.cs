@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System;
+using MovieLibrary.Core.Extensions;
 
 namespace MovieLibrary.Api.Controllers.Filter
 {
@@ -26,42 +27,48 @@ namespace MovieLibrary.Api.Controllers.Filter
         public IEnumerable<MovieWithCategoriesDto> GetFilteredMovies([FromBody] FilterMovieRequestDto requestDto)
         {
             var result = _movieRepository
-                .GetAll(config => config.Include(mc => mc.MovieCategories).ThenInclude(category => category.Category))
-                .OrderByDescending(movie => movie.ImdbRating)
-                .Select(movie => _mapper.Map<MovieWithCategoriesDto>(movie));
+                .GetAll(config => config.Include(mc => mc.MovieCategories).ThenInclude(category => category.Category));
 
-            if ((requestDto.PageNumber == null && requestDto.ItemsPerPage != null) ||
-                (requestDto.PageNumber != null && requestDto.ItemsPerPage == null))
+            ValidateRequest(requestDto);
+
+            if (IsSearchStringGiven(requestDto))
             {
-                throw new ArgumentException($"Parameters {nameof(requestDto.PageNumber)} and {nameof(requestDto.ItemsPerPage)} both must have values or both must not have values in the same request.");
+                result = result.FilterByText(requestDto.SearchText);
             }
 
-            if (string.IsNullOrWhiteSpace(requestDto.SearchText) == false)
+            if (requestDto.MinImdb.HasValue)
             {
-                result = result.Where(movie => movie.Title.ToUpper().Contains(requestDto.SearchText.ToUpper()));
+                result = result.FilterByMinImbd(requestDto.MinImdb.Value);
             }
 
-            if(requestDto.MinImdb.HasValue)
+            if (requestDto.MaxImdb.HasValue)
             {
-                result = result.Where(movie => movie.ImdbRating >= requestDto.MinImdb);
+                result = result.FilterByMaxImdb(requestDto.MaxImdb.Value);
             }
 
-            if(requestDto.MaxImdb.HasValue)
+            if (requestDto.CategoriesIds.Any())
             {
-                result = result.Where(movie => movie.ImdbRating <= requestDto.MaxImdb);
+                result = result.FilterByCategories(requestDto.CategoriesIds);
             }
 
-            if(requestDto.CategoriesIds.Any())
+            if (requestDto.PageNumber.HasValue)
             {
-                result = result.Where(movie => movie.Categories.Any(category => requestDto.CategoriesIds.Contains(category.Id)));
+                result = result.ApplyPagination(requestDto.PageNumber.Value, requestDto.ItemsPerPage.Value);
             }
 
-            if(requestDto.PageNumber.HasValue)
-            {
-                result = result.Skip((requestDto.PageNumber.Value - 1) * requestDto.ItemsPerPage.Value).Take(requestDto.ItemsPerPage.Value);
-            }
+            return result.OrderByDescending(movie => movie.ImdbRating).Select(movie => _mapper.Map<MovieWithCategoriesDto>(movie));
 
-            return result;
+            static bool IsSearchStringGiven(FilterMovieRequestDto requestDto) =>
+                string.IsNullOrWhiteSpace(requestDto.SearchText) == false;
+
+            static void ValidateRequest(FilterMovieRequestDto requestDto)
+            {
+                if ((requestDto.PageNumber == null && requestDto.ItemsPerPage != null) ||
+                    (requestDto.PageNumber != null && requestDto.ItemsPerPage == null))
+                {
+                    throw new ArgumentException($"Parameters {nameof(requestDto.PageNumber)} and {nameof(requestDto.ItemsPerPage)} both must have values or both must not have values in the same request.");
+                }
+            }
         }
     }
 }
