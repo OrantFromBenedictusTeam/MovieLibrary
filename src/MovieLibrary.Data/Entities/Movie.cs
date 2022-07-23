@@ -2,14 +2,12 @@
 
 namespace MovieLibrary.Data.Entities
 {
-    public class Movie
+    public class Movie: Entity
     {
         public Movie()
         {
-            this.MovieCategories = new List<MovieCategory>();
+            MovieCategories = new List<MovieCategory>();
         }
-
-        public int Id { get; set; }
 
         public string Title { get; set; }
 
