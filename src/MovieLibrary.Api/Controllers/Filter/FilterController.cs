@@ -46,7 +46,7 @@ namespace MovieLibrary.Api.Controllers.Filter
                 result = result.FilterByMaxImdb(requestDto.MaxImdb.Value);
             }
 
-            if (requestDto.CategoriesIds.Any())
+            if (requestDto.CategoriesIds?.Any() ?? false)
             {
                 result = result.FilterByCategories(requestDto.CategoriesIds);
             }
